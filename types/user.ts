@@ -3,7 +3,7 @@ import {OfficeType} from "@/types/offices";
 export type UserType = {
     id: number;
     email: string;
-    name: string;
+    username: string;
     image: string;
     office_id: number;
     is_active: boolean;

@@ -1,30 +1,36 @@
 "use client"
-
 import React, {Fragment} from "react";
-import {useRouter} from "next/navigation";
+import {usePathname} from "next/navigation";
 import {useGetAuth, useLogout} from "@/queries/auth";
 import {useSidebar, SidebarMenuItem, SidebarMenuButton, SidebarMenu} from "@/components/ui/sidebar";
 import {DropdownMenuTrigger, DropdownMenuContent, DropdownMenu, DropdownMenuItem} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import {LogOut} from "lucide-react";
-import ConfirmationModal from "@/components/modals/confirmation";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger
-} from "@/components/ui/alert-dialog";
-import {Button} from "@/components/ui/button";
+ AlertDialogTrigger} from "@/components/ui/alert-dialog";
 
 export default function NavUser(){
     const [openLogout, setOpenLogout] = React.useState<boolean>(false);
-    const router = useRouter();
-    const {data, isError, error} = useGetAuth({
+    const [loggingOut, setLoggingOut] = React.useState<boolean>(false);
+
+    const pathname = usePathname();
+    const {data, error} = useGetAuth({
         redirectToLogin: true
     });
-    const logout = useLogout();
+    const logout = useLogout(pathname);
     const { isMobile } = useSidebar();
+
+    const handleConfirmLogout = () => {
+        setLoggingOut(true);
+        // logout() sinkron: fire-and-forget POST /auth/logout, clear cookies,
+        // lalu window.location.href redirect — tidak perlu await/setOpenLogout(false)
+        // karena halaman akan langsung navigasi keluar.
+        logout();
+    };
 
     return (
         <Fragment>
@@ -32,7 +38,9 @@ export default function NavUser(){
                 <SidebarMenuItem>
                     <DropdownMenu>
                         <DropdownMenuTrigger>
-                            {data?.email}
+                            <SidebarMenuButton>
+                                {data?.username}
+                            </SidebarMenuButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
@@ -44,35 +52,40 @@ export default function NavUser(){
                                 Profile
                             </DropdownMenuItem>
                             <Separator orientation={"horizontal"} />
-                            <AlertDialog open={openLogout} onOpenChange={setOpenLogout} >
-                                <AlertDialogTrigger render={
-                                    <DropdownMenuItem>
-                                        {"Logout"}
-                                    </DropdownMenuItem>
-                                }>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Logout</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            {"Are you sure you want to logout?"}
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>{ "Cancel"}</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => {
-                                            logout();
-                                            setOpenLogout(false);
-                                        }}>{ "OK"}</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <DropdownMenuItem
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setOpenLogout(true);
+                                }}
+                            >
+                                <LogOut className="mr-2 h-4 w-4" />
+                                Logout
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </SidebarMenuItem>
             </SidebarMenu>
 
-
+            <AlertDialog open={openLogout} onOpenChange={setOpenLogout}>
+                <AlertDialogTrigger>Logout</AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Logout from TMS</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {"Are you sure you want to logout? You'll need to sign in again to continue."}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={loggingOut}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmLogout}
+                            disabled={loggingOut}
+                        >
+                            {loggingOut ? "Logging out..." : "Logout"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Fragment>
     );
 }

@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 // client-side cookie table.
 export const COOKIE_NAMES = {
     accessToken: "tms_access_token",
+    refresh: "tms_refresh_token",
     user: "tms_user",
 } as const;
 

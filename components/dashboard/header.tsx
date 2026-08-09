@@ -3,6 +3,7 @@ import {DashboardProps} from "@/components/dashboard/wrapper";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import NavUser from "@/components/nav/user";
+import Logout from "@/components/nav/logout";
 
 export default function DashboardHeader({ leftSection }: DashboardProps) {
     return (
@@ -13,7 +14,7 @@ export default function DashboardHeader({ leftSection }: DashboardProps) {
                 {leftSection}
 
                 <div className={"ml-auto flex items-center gap-2"}>
-                    {<NavUser />}
+                    {<Logout />}
                 </div>
 
             </div>

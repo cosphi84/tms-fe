@@ -108,15 +108,15 @@ export function useGetAuth<TData = UserType>(
         queryFn: async () => {
             // Fast path: decode from cookie (no network round-trip)
             const cookieUser = parseCookieUser(Cookies.get(COOKIE_NAMES.user));
-            if (cookieUser) {
-                // Cast CookieUser to UserProps (they share the same shape from BE)
-                return cookieUser as unknown as UserType;
+            if (!cookieUser?.id) {
+                // Tidak ada id yang bisa dipakai untuk build URL /users/{id}
+                throw new Error("User id not found — cannot fetch profile");
             }
 
             // Fallback: fetch from BE (e.g., cookie was manually cleared)
             const axios = createBrowserInstance();
             const qs = query ? `?${getQueryString(query)}` : "";
-            return axios.get<UserType>(`/user${qs}`);
+            return axios.get<UserType>(`/users/${cookieUser.id}${qs}`);
         },
         // Don't retry on auth errors — they go straight to logout
         retry: (failureCount, error) => {

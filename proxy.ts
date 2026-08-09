@@ -1,27 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { nodeParseJwt, isTokenExpired } from "@/lib/jwt";
+import { apiHost } from "./config/axios";
+import {COOKIE_NAMES} from "@/constants/cookies";
 
 const publicPathnames = ["/login"];
-
-// ─── Cookie names (must stay in sync with auth-helper.ts) ────────────────────
-const COOKIE = {
-    access: "tms_access_token",
-    refresh: "tms_refresh_token",
-    user: "tms_user",
-} as const;
-
-// ─── Proactive refresh (server-side, inside middleware) ───────────────────────
-//
-// We call the BE from inside the middleware when the access token is missing
-// or has < 60s left. This happens BEFORE the response reaches the browser,
-// so there is zero UI flicker — the new token is attached to the response
-// cookie before any client sees a 401.
-//
-
-// ✅ Fixed: normalize so we never end up with "...backend.comauth/refresh"
-// depending on whether the env var has a trailing slash or not.
-const apiHost = (process.env["NEXT_PUBLIC_TLMS_BACKEND_API"] ?? "").replace(/\/+$/, "");
 
 async function tryRefreshFromMiddleware(
     refreshToken: string
@@ -32,13 +15,13 @@ async function tryRefreshFromMiddleware(
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Cookie: `${COOKIE.refresh}=${refreshToken}`,
+                Cookie: `${COOKIE_NAMES.refresh}=${refreshToken}`,
             },
             // Edge-safe: no keep-alive, short timeout
             signal: AbortSignal.timeout(5000),
         });
         if (!res.ok) return null;
-        return res.json() as Promise<{ access_token: string; refresh_token: string }>;
+        return await res.json() as Promise<{ access_token: string; refresh_token: string }>;
     } catch {
         return null;
     }
@@ -57,7 +40,7 @@ function setTokenCookies(
     // /auth/login JSON body (not Set-Cookie) specifically so client JS can
     // read it and attach it as `Authorization: Bearer` in the axios
     // interceptor. Storing it in a readable cookie here just mirrors that.
-    response.cookies.set(COOKIE.access, accessToken, {
+    response.cookies.set(COOKIE_NAMES.accessToken, accessToken, {
         maxAge: 15 * 60, // 15 minutes
         sameSite: "lax",
         secure: isProduction,
@@ -68,7 +51,7 @@ function setTokenCookies(
     // refresh, the refresh token would flip from "httpOnly, BE-issued" to
     // "readable via document.cookie", undoing the whole point of making it
     // httpOnly in the first place.
-    response.cookies.set(COOKIE.refresh, refreshToken, {
+    response.cookies.set(COOKIE_NAMES.refresh, refreshToken, {
         maxAge: 7 * 24 * 60 * 60, // 7 days
         sameSite: "lax",
         secure: isProduction,
@@ -78,9 +61,9 @@ function setTokenCookies(
 }
 
 function clearTokenCookies(response: NextResponse) {
-    response.cookies.delete(COOKIE.access);
-    response.cookies.delete(COOKIE.refresh);
-    response.cookies.delete(COOKIE.user);
+    response.cookies.delete(COOKIE_NAMES.accessToken);
+    response.cookies.delete(COOKIE_NAMES.refresh);
+    response.cookies.delete(COOKIE_NAMES.user);
 }
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
@@ -100,8 +83,8 @@ export async function proxy(request: NextRequest) {
     const loginRedirect = () =>
         NextResponse.redirect(new URL(`/login?prev=${buildCurrentPath()}`, request.url));
 
-    const accessCookie = request.cookies.get(COOKIE.access);
-    const refreshCookie = request.cookies.get(COOKIE.refresh);
+    const accessCookie = request.cookies.get(COOKIE_NAMES.accessToken);
+    const refreshCookie = request.cookies.get(COOKIE_NAMES.refresh);
 
     const decodedAccess = accessCookie?.value
         ? nodeParseJwt(accessCookie.value)
@@ -142,8 +125,8 @@ export async function proxy(request: NextRequest) {
                 // sees the stale/expired access cookie — only the *next*
                 // navigation would pick up the refreshed token. See:
                 // https://nextjs.org/docs/app/building-your-application/routing/middleware#using-cookies
-                request.cookies.set(COOKIE.access, tokens.access_token);
-                request.cookies.set(COOKIE.refresh, tokens.refresh_token);
+                request.cookies.set(COOKIE_NAMES.accessToken, tokens.access_token);
+                request.cookies.set(COOKIE_NAMES.refresh, tokens.refresh_token);
 
                 const response = NextResponse.next({ request });
                 setTokenCookies(response, tokens.access_token, tokens.refresh_token);

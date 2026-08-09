@@ -30,7 +30,7 @@ export type RefreshResponse = {
 export type CookieUser = {
     id: number;
     email: string;
-    name: string;
+    username: string;
     image: string;
     office_id: number;
     office: OfficeType;
@@ -39,7 +39,7 @@ export type CookieUser = {
 export const defaultCookieUser: CookieUser = {
     id: 0,
     email: "",
-    name: "",
+    username: "",
     image: "",
     office_id: 0,
     office: {
