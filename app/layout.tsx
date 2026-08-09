@@ -5,6 +5,10 @@ import { cn } from "@/lib/utils";
 import {SiteMetadata} from "@/config/metadata";
 import {ThemeProvider} from "next-themes";
 import {ReactQueryProvider} from "@/providers/react-query";
+import ErrorBoundary from "@/providers/error-boundary";
+import {Suspense} from "react";
+import {LoadingFallback} from "@/components/loading-fallback";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const jetbrainsMono = JetBrains_Mono({subsets:['latin'],variable:'--font-mono'});
 
@@ -52,7 +56,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             enableSystem
             disableTransitionOnChange
         >
-          {children}
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
+            </Suspense>
+          </ErrorBoundary>
         </ThemeProvider>
       </ReactQueryProvider>
       </body>
