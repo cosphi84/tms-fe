@@ -9,9 +9,10 @@ const lft = () => {
 export default function DashboardPage()
 {
     return (
-        <DashboardWrapper leftSection={lft()}>
+        <DashboardWrapper
+            leftSection={lft()} >
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-            Tools Management
+            Toolssss Management
         </div>
         </DashboardWrapper>
     )

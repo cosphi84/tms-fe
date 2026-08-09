@@ -32,17 +32,6 @@ async function tryRefreshFromMiddleware(
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                // ✅ Fixed: refresh_token is httpOnly and BE-issued, so the
-                // Go handler almost certainly reads it via c.Cookie(...),
-                // the same way a real browser request would send it
-                // automatically. This fetch() runs server-side in
-                // middleware though, so nothing is attached automatically —
-                // we have to forward it as a raw Cookie header ourselves.
-                // ⚠️ NEEDS CONFIRMATION: the cookie name BE actually issues
-                // via Set-Cookie on /auth/login — assumed here to be the
-                // same "tms_refresh_token" this file already uses. If BE
-                // uses a different name (e.g. plain "refresh_token"), this
-                // still won't validate — swap COOKIE.refresh accordingly.
                 Cookie: `${COOKIE.refresh}=${refreshToken}`,
             },
             // Edge-safe: no keep-alive, short timeout

@@ -1,10 +1,11 @@
 "use client"
 
-import {Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton} from "@/components/ui/sidebar";
+import {Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter} from "@/components/ui/sidebar";
 import * as React from "react"
 import {ComponentProps} from "react";
 import Link from "next/link";
 import {Wrench} from "lucide-react";
+import NavUser from "@/components/nav/user";
 
 
 export function AppSidebar({ ...props}: ComponentProps<typeof Sidebar>) {
@@ -27,6 +28,9 @@ export function AppSidebar({ ...props}: ComponentProps<typeof Sidebar>) {
             <SidebarContent>
                 <div>Sidebar</div>
             </SidebarContent>
+            <SidebarFooter>
+                TMS V1.0.0
+            </SidebarFooter>
         </Sidebar>
     )
 }
