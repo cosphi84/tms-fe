@@ -80,8 +80,14 @@ export async function proxy(request: NextRequest) {
     // returned response instead (see below), which is what was actually
     // happening in practice anyway — this just removes the misleading dead
     // code path.
-    const loginRedirect = () =>
-        NextResponse.redirect(new URL(`/login?prev=${buildCurrentPath()}`, request.url));
+    const loginRedirect = () => {
+        const url = request.nextUrl.clone();
+
+        url.pathname = "/login";
+        url.searchParams.set("prev", buildCurrentPath());
+
+        return NextResponse.redirect(url);
+};
 
     const accessCookie = request.cookies.get(COOKIE_NAMES.accessToken);
     const refreshCookie = request.cookies.get(COOKIE_NAMES.refresh);
@@ -97,9 +103,11 @@ export async function proxy(request: NextRequest) {
 
     // ── Authenticated user hitting /login → send home ────────────────────────
     if (accessValid && pathname === "/login") {
-        return NextResponse.redirect(new URL("/", request.url));
-    }
+        const url = request.nextUrl.clone();
+        url.pathname = "/";
 
+        return NextResponse.redirect(url);
+    }
     // ── Public paths — let through ───────────────────────────────────────────
     if (publicPathnames.includes(pathname)) {
         return NextResponse.next();

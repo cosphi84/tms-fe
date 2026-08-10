@@ -29,7 +29,7 @@ export function AppSidebar({ ...props}: ComponentProps<typeof Sidebar>) {
                 <div>Sidebar</div>
             </SidebarContent>
             <SidebarFooter>
-                TMS V1.0.0
+                <NavUser />
             </SidebarFooter>
         </Sidebar>
     )
